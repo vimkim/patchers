@@ -315,7 +315,9 @@ impl App {
 fn main() -> Result<()> {
     let opts = Opts::parse();
     let input_text = fs::read_to_string(&opts.input)
-        .with_context(|| format!("failed to read {}", opts.input.display()))?;
+        .with_context(|| format!("failed to read {}", opts.input.display()))?
+        .replace("\r\n", "\n")
+        .replace('\t', "    ");
     let (files, hunks) = parse_unified_diff(&input_text)?;
     if hunks.is_empty() {
         return Err(anyhow!("No hunks found in {}", opts.input.display()));
@@ -418,10 +420,16 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
                 preview_lines.push(Line::from("No hunk selected"));
             }
 
+            let preview_area = h[1];
+
+            // Clear the preview area so old content disappears
+            f.render_widget(Clear, preview_area);
+
             let preview = Paragraph::new(preview_lines)
                 .wrap(Wrap { trim: false })
                 .block(Block::default().title("Preview").borders(Borders::ALL));
-            f.render_widget(preview, h[1]);
+
+            f.render_widget(preview, preview_area);
 
             let help = Paragraph::new(vec![
                 Line::from(app.status.clone()),
