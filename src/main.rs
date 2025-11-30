@@ -5,8 +5,14 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use ratatui::widgets::Clear;
 use ratatui::{
-    backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, style::{Color, Modifier, Style}, text::{Line, Span}, widgets::{Block, Borders, List, ListItem, Paragraph, Wrap}, Terminal
+    Terminal,
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
 };
 use std::fs;
 use std::io::{self, Write};
@@ -218,11 +224,17 @@ struct App {
     input_path: PathBuf,
     output_path: PathBuf,
     status: String,
+    list_state: ListState,
 }
 
 impl App {
     fn new(files: Vec<FileDiff>, hunks: Vec<Hunk>, input: PathBuf, output: PathBuf) -> Self {
-        let order = (0..hunks.len()).collect();
+        let order: Vec<usize> = (0..hunks.len()).collect();
+        let mut list_state = ListState::default();
+        if !order.is_empty() {
+            list_state.select(Some(0));
+        }
+
         Self {
             files,
             hunks,
@@ -231,6 +243,7 @@ impl App {
             input_path: input,
             output_path: output,
             status: "↑/↓ to move, Space to toggle & SAVE, q to quit".into(),
+            list_state,
         }
     }
 
@@ -248,9 +261,10 @@ impl App {
         );
         Ok(())
     }
-
     fn move_cursor(&mut self, dir: i32) {
         if self.order.is_empty() {
+            self.cursor = 0;
+            self.list_state.select(None);
             return;
         }
         let len = self.order.len() as i32;
@@ -262,6 +276,7 @@ impl App {
             cur = len - 1;
         }
         self.cursor = cur as usize;
+        self.list_state.select(Some(self.cursor));
     }
 
     fn write_filtered_patch(&self) -> Result<()> {
@@ -377,7 +392,7 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
             let list =
                 List::new(items).block(Block::default().title("Hunks").borders(Borders::ALL));
 
-            f.render_widget(list, h[0]);
+            f.render_stateful_widget(list, h[0], &mut app.list_state);
 
             // === Right-hand PREVIEW ===
             let mut preview_lines: Vec<Line> = Vec::new();
