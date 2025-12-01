@@ -7,6 +7,9 @@ This tool allows you to curate large patches into smaller, reviewable, or cherry
 
 Built with **Rust**, powered by **ratatui** and **crossterm**.
 
+<img width="2534" height="1307" alt="image" src="https://github.com/user-attachments/assets/d122222b-3b32-4abf-977c-9d322e7ed681" />
+
+
 ---
 
 ## Features
