@@ -1,5 +1,4 @@
-# Patchers: a TUI Diff Hunk Selector
-
+# Patchers: TUI for diff & patch file creation
 > I'm tired of scrolling long diff patch files.
 
 A fast, minimal **terminal UI for interactively selecting hunks from a unified diff** and writing out a **filtered patch**.  
